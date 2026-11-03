@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pediatric Blood Pressure Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+  --bg:#EDF1F5; --surface:#FFFFFF; --ink:#13233A; --muted:#566880; --line:#D3DCE5; --field:#F7F9FB;
+  --accent:#0E6B7B; --accent-ink:#FFFFFF; --focus:#0E6B7B;
+  --c0:#2F7D55; --c1:#A96A0C; --c2:#C0480F; --c3:#9B1C3A;
+  --z0:#CDE7D8; --z1:#F2E0B5; --z2:#F0C6AB; --z3:#E6B2BF;
+  --t0:#EAF5EE; --t1:#FBF3DE; --t2:#FCEBDF; --t3:#F9E4E9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1721; --surface:#16232F; --ink:#E7EEF6; --muted:#9BACBF; --line:#2A3A4C; --field:#101C27;
+    --accent:#58BAC9; --accent-ink:#04222A; --focus:#58BAC9;
+    --c0:#62C48F; --c1:#E3AC4A; --c2:#EE8A57; --c3:#F08AA3;
+    --z0:#1F4A35; --z1:#4D3B14; --z2:#5A2E15; --z3:#561A2A;
+    --t0:#15291F; --t1:#2B2412; --t2:#2E1D12; --t3:#301620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1721; --surface:#16232F; --ink:#E7EEF6; --muted:#9BACBF; --line:#2A3A4C; --field:#101C27;
+  --accent:#58BAC9; --accent-ink:#04222A; --focus:#58BAC9;
+  --c0:#62C48F; --c1:#E3AC4A; --c2:#EE8A57; --c3:#F08AA3;
+  --z0:#1F4A35; --z1:#4D3B14; --z2:#5A2E15; --z3:#561A2A;
+  --t0:#15291F; --t1:#2B2412; --t2:#2E1D12; --t3:#301620;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 48px}
+header h1{font-size:clamp(1.55rem,4.4vw,2.1rem);line-height:1.15;letter-spacing:-0.015em;font-weight:700;margin:8px 0 6px}
+header p{margin:0;color:var(--muted);max-width:62ch}
+.grid{display:grid;gap:18px;margin-top:22px}
+@media (min-width:900px){.grid{grid-template-columns:380px 1fr;align-items:start}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+fieldset{border:0;margin:0 0 18px;padding:0;min-width:0}
+fieldset:last-of-type{margin-bottom:0}
+legend{font-weight:650;font-size:.95rem;padding:0;margin-bottom:8px}
+label.lbl{display:block;font-size:.85rem;color:var(--muted);margin:0 0 4px}
+.row{display:grid;gap:10px}
+.row.two{grid-template-columns:1fr 1fr}
+input[type=date],input[type=number]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:10px 11px;min-height:44px;font-variant-numeric:tabular-nums}
+input:focus-visible,button:focus-visible,summary:focus-visible,.seg input:focus-visible+span{outline:2px solid var(--focus);outline-offset:2px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--field)}
+.seg label{position:relative;cursor:pointer;margin:0}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;text-align:center;padding:10px 8px;min-height:44px;font-weight:500;border-right:1px solid var(--line)}
+.seg label:last-child span{border-right:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);font-weight:650}
+.hrow{display:grid;grid-template-columns:1fr 128px;gap:10px;align-items:end}
+.linkbtn{background:none;border:0;padding:6px 0;margin-top:6px;font:inherit;font-size:.88rem;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.bp-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 10px;align-items:center}
+.bp-grid .h{font-size:.82rem;color:var(--muted)}
+.bp-grid .rn{font-size:.9rem}
+.bp-grid .rn small{color:var(--muted)}
+.hint{font-size:.82rem;color:var(--muted);margin:8px 0 0}
+.actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+button.btn{font:inherit;font-weight:600;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#msg{font-size:.9rem;margin-top:12px}
+#msg .err{color:var(--c3);margin:4px 0}
+.empty{color:var(--muted)}
+.empty strong{color:var(--ink);font-weight:600}
+.verdict{border-left:6px solid var(--vc);background:var(--vt);border-radius:8px;padding:14px 16px;margin-bottom:18px}
+.verdict .k{font-size:.85rem;color:var(--muted)}
+.verdict .v{font-size:clamp(1.35rem,4.2vw,1.8rem);font-weight:700;letter-spacing:-0.01em;line-height:1.2;color:var(--ink)}
+.verdict p{margin:6px 0 0;font-size:.92rem}
+.v0{--vc:var(--c0);--vt:var(--t0)} .v1{--vc:var(--c1);--vt:var(--t1)} .v2{--vc:var(--c2);--vt:var(--t2)} .v3{--vc:var(--c3);--vt:var(--t3)}
+.metrics{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:20px}
+.m{border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.m .t{font-size:.85rem;color:var(--muted)}
+.m .big{font-size:1.5rem;font-weight:700;line-height:1.25}
+.m .big small{font-size:.9rem;font-weight:500;color:var(--muted)}
+.m .sub{font-size:.88rem;margin-top:2px}
+.chip{display:inline-block;font-size:.8rem;font-weight:600;border-radius:99px;padding:1px 9px;margin-top:6px;color:var(--ink);background:var(--vt);border:1px solid var(--vc)}
+h2{font-size:1.02rem;margin:0 0 8px;font-weight:650}
+.gauge{margin-bottom:6px}
+.gauge .gt{display:flex;justify-content:space-between;gap:8px;font-size:.9rem;margin-bottom:2px}
+.gauge .gt span:last-child{color:var(--muted)}
+svg.g{width:100%;height:auto;display:block}
+svg.g text{font-family:inherit;fill:var(--muted);font-size:10.5px}
+svg.g text.val{fill:var(--ink);font-weight:700;font-size:12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted);margin:6px 0 20px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+.tbl-wrap{overflow-x:auto;margin-bottom:16px}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:600;color:var(--muted);font-size:.84rem}
+tbody th{font-weight:500}
+.notes{font-size:.88rem;color:var(--muted)}
+.notes p{margin:0 0 8px}
+details{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-top:14px}
+details>summary{cursor:pointer;font-weight:650;padding:14px 18px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"+";font-size:1.3rem;line-height:1;color:var(--muted)}
+details[open]>summary::after{content:"–"}
+details .in{padding:0 18px 16px}
+details .in p{margin:0 0 10px;font-size:.92rem}
+.cite{font-size:.82rem;color:var(--muted)}
+.cite li{margin-bottom:4px}
+.foot{text-align:center;font-size:.9rem;color:var(--muted);margin-top:28px}
+@media print{ .actions,#msg,details,.linkbtn{display:none} body{background:#fff} }
+@media (prefers-reduced-motion:no-preference){ .verdict{transition:background-color .2s,border-color .2s} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Pediatric blood pressure calculator</h1>
+  <p>By Dr Vikram Patra</p>
+</header>
+
+<div class="grid">
+  <form class="card" id="f" autocomplete="off" novalidate>
+    <fieldset>
+      <legend>Child</legend>
+      <div class="row two">
+        <div><label class="lbl" for="dob">Birth date</label><input type="date" id="dob"></div>
+        <div><label class="lbl" for="dom">Measurement date</label><input type="date" id="dom"></div>
+      </div>
+      <div style="margin-top:12px">
+        <span class="lbl" id="sexlbl">Sex</span>
+        <div class="seg" role="radiogroup" aria-labelledby="sexlbl">
+          <label><input type="radio" name="sex" value="M"><span>Male</span></label>
+          <label><input type="radio" name="sex" value="F"><span>Female</span></label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Height</legend>
+      <div id="hMeasured">
+        <div class="hrow">
+          <div><label class="lbl" for="height">Height</label><input type="number" id="height" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 132.5"></div>
+          <div class="seg" role="radiogroup" aria-label="Height units">
+            <label><input type="radio" name="units" value="cm" checked><span>cm</span></label>
+            <label><input type="radio" name="units" value="in"><span>in</span></label>
+          </div>
+        </div>
+        <button type="button" class="linkbtn" id="toPct">I already know the height percentile</button>
+      </div>
+      <div id="hPct" hidden>
+        <label class="lbl" for="hpct">Height percentile (0–100)</label>
+        <input type="number" id="hpct" inputmode="decimal" step="0.1" min="0" max="100" placeholder="e.g. 45">
+        <button type="button" class="linkbtn" id="toMeasured">Enter measured height instead</button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Blood pressure (mmHg)</legend>
+      <div class="bp-grid">
+        <span></span><span class="h">Systolic</span><span class="h">Diastolic</span>
+        <span class="rn">Reading 1</span>
+        <input type="number" id="s1" inputmode="numeric" step="1" aria-label="Reading 1 systolic" placeholder="SBP">
+        <input type="number" id="d1" inputmode="numeric" step="1" aria-label="Reading 1 diastolic" placeholder="DBP">
+        <span class="rn">Reading 2 <small>(optional)</small></span>
+        <input type="number" id="s2" inputmode="numeric" step="1" aria-label="Reading 2 systolic" placeholder="SBP">
+        <input type="number" id="d2" inputmode="numeric" step="1" aria-label="Reading 2 diastolic" placeholder="DBP">
+        <span class="rn">Reading 3 <small>(optional)</small></span>
+        <input type="number" id="s3" inputmode="numeric" step="1" aria-label="Reading 3 systolic" placeholder="SBP">
+        <input type="number" id="d3" inputmode="numeric" step="1" aria-label="Reading 3 diastolic" placeholder="DBP">
+      </div>
+      <p class="hint">If you enter more than one reading, the average (rounded to a whole number) is used.</p>
+    </fieldset>
+
+    <div class="actions"><button type="button" class="btn" id="reset">Clear form</button></div>
+    <div id="msg" role="status" aria-live="polite"></div>
+  </form>
+
+  <section class="card" id="out" aria-live="polite"></section>
+</div>
+
+<details>
+  <summary>BP categories and stages</summary>
+  <div class="in">
+    <p>Category is set separately for systolic and diastolic BP, and the higher of the two is the overall category. For children under 13 the percentile limit or the fixed limit applies, whichever is lower.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Category</th><th>Age 1 to under 13</th><th>Age 13 and over</th></tr></thead>
+      <tbody>
+        <tr><th>Normal</th><td>below 90th percentile</td><td>below 120/80</td></tr>
+        <tr><th>Elevated</th><td>90th to below 95th, or 120/80 to below 95th</td><td>120/&lt;80 to 129/&lt;80</td></tr>
+        <tr><th>Stage 1 HTN</th><td>95th to below 95th + 12, or 130/80 to 139/89</td><td>130/80 to 139/89</td></tr>
+        <tr><th>Stage 2 HTN</th><td>95th + 12 mmHg or more, or 140/90 or more</td><td>140/90 or more</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</details>
+
+<footer class="foot">@CreatifyStudio</footer>
+</div>
+
+<script>
+const BP = {"boys":{"1":{"50":{"s":[80,81,83,85,87,88,89],"d":[34,35,36,37,38,39,39]},"90":{"s":[94,95,97,99,100,102,103],"d":[49,50,51,52,53,53,54]},"95":{"s":[98,99,101,103,104,106,106],"d":[54,54,55,56,57,58,58]},"99":{"s":[105,106,108,110,112,113,114],"d":[61,62,63,64,65,66,66]}},"2":{"50":{"s":[84,85,87,88,90,92,92],"d":[39,40,41,42,43,44,44]},"90":{"s":[97,99,100,102,104,105,106],"d":[54,55,56,57,58,58,59]},"95":{"s":[101,102,104,106,108,109,110],"d":[59,59,60,61,62,63,63]},"99":{"s":[109,110,111,113,115,117,117],"d":[66,67,68,69,70,71,71]}},"3":{"50":{"s":[86,87,89,91,93,94,95],"d":[44,44,45,46,47,48,48]},"90":{"s":[100,101,103,105,107,108,109],"d":[59,59,60,61,62,63,63]},"95":{"s":[104,105,107,109,110,112,113],"d":[63,63,64,65,66,67,67]},"99":{"s":[111,112,114,116,118,119,120],"d":[71,71,72,73,74,75,75]}},"4":{"50":{"s":[88,89,91,93,95,96,97],"d":[47,48,49,50,51,51,52]},"90":{"s":[102,103,105,107,109,110,111],"d":[62,63,64,65,66,66,67]},"95":{"s":[106,107,109,111,112,114,115],"d":[66,67,68,69,70,71,71]},"99":{"s":[113,114,116,118,120,121,122],"d":[74,75,76,77,78,78,79]}},"5":{"50":{"s":[90,91,93,95,96,98,98],"d":[50,51,52,53,54,55,55]},"90":{"s":[104,105,106,108,110,111,112],"d":[65,66,67,68,69,69,70]},"95":{"s":[108,109,110,112,114,115,116],"d":[69,70,71,72,73,74,74]},"99":{"s":[115,116,118,120,121,123,123],"d":[77,78,79,80,81,81,82]}},"6":{"50":{"s":[91,92,94,96,98,99,100],"d":[53,53,54,55,56,57,57]},"90":{"s":[105,106,108,110,111,113,113],"d":[68,68,69,70,71,72,72]},"95":{"s":[109,110,112,114,115,117,117],"d":[72,72,73,74,75,76,76]},"99":{"s":[116,117,119,121,123,124,125],"d":[80,80,81,82,83,84,84]}},"7":{"50":{"s":[92,94,95,97,99,100,101],"d":[55,55,56,57,58,59,59]},"90":{"s":[106,107,109,111,113,114,115],"d":[70,70,71,72,73,74,74]},"95":{"s":[110,111,113,115,117,118,119],"d":[74,74,75,76,77,78,78]},"99":{"s":[117,118,120,122,124,125,126],"d":[82,82,83,84,85,86,86]}},"8":{"50":{"s":[94,95,97,99,100,102,102],"d":[56,57,58,59,60,60,61]},"90":{"s":[107,109,110,112,114,115,116],"d":[71,72,72,73,74,75,76]},"95":{"s":[111,112,114,116,118,119,120],"d":[75,76,77,78,79,79,80]},"99":{"s":[119,120,122,123,125,127,127],"d":[83,84,85,86,87,87,88]}},"9":{"50":{"s":[95,96,98,100,102,103,104],"d":[57,58,59,60,61,61,62]},"90":{"s":[109,110,112,114,115,117,118],"d":[72,73,74,75,76,76,77]},"95":{"s":[113,114,116,118,119,121,121],"d":[76,77,78,79,80,81,81]},"99":{"s":[120,121,123,125,127,128,129],"d":[84,85,86,87,88,88,89]}},"10":{"50":{"s":[97,98,100,102,103,105,106],"d":[58,59,60,61,61,62,63]},"90":{"s":[111,112,114,115,117,119,119],"d":[73,73,74,75,76,77,78]},"95":{"s":[115,116,117,119,121,122,123],"d":[77,78,79,80,81,81,82]},"99":{"s":[122,123,125,127,128,130,130],"d":[85,86,86,88,88,89,90]}},"11":{"50":{"s":[99,100,102,104,105,107,107],"d":[59,59,60,61,62,63,63]},"90":{"s":[113,114,115,117,119,120,121],"d":[74,74,75,76,77,78,78]},"95":{"s":[117,118,119,121,123,124,125],"d":[78,78,79,80,81,82,82]},"99":{"s":[124,125,127,129,130,132,132],"d":[86,86,87,88,89,90,90]}},"12":{"50":{"s":[101,102,104,106,108,109,110],"d":[59,60,61,62,63,63,64]},"90":{"s":[115,116,118,120,121,123,123],"d":[74,75,75,76,77,78,79]},"95":{"s":[119,120,122,123,125,127,127],"d":[78,79,80,81,82,82,83]},"99":{"s":[126,127,129,131,133,134,135],"d":[86,87,88,89,90,90,91]}},"13":{"50":{"s":[104,105,106,108,110,111,112],"d":[60,60,61,62,63,64,64]},"90":{"s":[117,118,120,122,124,125,126],"d":[75,75,76,77,78,79,79]},"95":{"s":[121,122,124,126,128,129,130],"d":[79,79,80,81,82,83,83]},"99":{"s":[128,130,131,133,135,136,137],"d":[87,87,88,89,90,91,91]}},"14":{"50":{"s":[106,107,109,111,113,114,115],"d":[60,61,62,63,64,65,65]},"90":{"s":[120,121,123,125,126,128,128],"d":[75,76,77,78,79,79,80]},"95":{"s":[124,125,127,128,130,132,132],"d":[80,80,81,82,83,84,84]},"99":{"s":[131,132,134,136,138,139,140],"d":[87,88,89,90,91,92,92]}},"15":{"50":{"s":[109,110,112,113,115,117,117],"d":[61,62,63,64,65,66,66]},"90":{"s":[122,124,125,127,129,130,131],"d":[76,77,78,79,80,80,81]},"95":{"s":[126,127,129,131,133,134,135],"d":[81,81,82,83,84,85,85]},"99":{"s":[134,135,136,138,140,142,142],"d":[88,89,90,91,92,93,93]}},"16":{"50":{"s":[111,112,114,116,118,119,120],"d":[63,63,64,65,66,67,67]},"90":{"s":[125,126,128,130,131,133,134],"d":[78,78,79,80,81,82,82]},"95":{"s":[129,130,132,134,135,137,137],"d":[82,83,83,84,85,86,87]},"99":{"s":[136,137,139,141,143,144,145],"d":[90,90,91,92,93,94,94]}},"17":{"50":{"s":[114,115,116,118,120,121,122],"d":[65,66,66,67,68,69,70]},"90":{"s":[127,128,130,132,134,135,136],"d":[80,80,81,82,83,84,84]},"95":{"s":[131,132,134,136,138,139,140],"d":[84,85,86,87,87,88,89]},"99":{"s":[139,140,141,143,145,146,147],"d":[92,93,93,94,95,96,97]}}},"girls":{"1":{"50":{"s":[83,84,85,86,88,89,90],"d":[38,39,39,40,41,41,42]},"90":{"s":[97,97,98,100,101,102,103],"d":[52,53,53,54,55,55,56]},"95":{"s":[100,101,102,104,105,106,107],"d":[56,57,57,58,59,59,60]},"99":{"s":[108,108,109,111,112,113,114],"d":[64,64,65,65,66,67,67]}},"2":{"50":{"s":[85,85,87,88,89,91,91],"d":[43,44,44,45,46,46,47]},"90":{"s":[98,99,100,101,103,104,105],"d":[57,58,58,59,60,61,61]},"95":{"s":[102,103,104,105,107,108,109],"d":[61,62,62,63,64,65,65]},"99":{"s":[109,110,111,112,114,115,116],"d":[69,69,70,70,71,72,72]}},"3":{"50":{"s":[86,87,88,89,91,92,93],"d":[47,48,48,49,50,50,51]},"90":{"s":[100,100,102,103,104,106,106],"d":[61,62,62,63,64,64,65]},"95":{"s":[104,104,105,107,108,109,110],"d":[65,66,66,67,68,68,69]},"99":{"s":[111,111,113,114,115,116,117],"d":[73,73,74,74,75,76,76]}},"4":{"50":{"s":[88,88,90,91,92,94,94],"d":[50,50,51,52,52,53,54]},"90":{"s":[101,102,103,104,106,107,108],"d":[64,64,65,66,67,67,68]},"95":{"s":[105,106,107,108,110,111,112],"d":[68,68,69,70,71,71,72]},"99":{"s":[112,113,114,115,117,118,119],"d":[76,76,76,77,78,79,79]}},"5":{"50":{"s":[89,90,91,93,94,95,96],"d":[52,53,53,54,55,55,56]},"90":{"s":[103,103,105,106,107,109,109],"d":[66,67,67,68,69,69,70]},"95":{"s":[107,107,108,110,111,112,113],"d":[70,71,71,72,73,73,74]},"99":{"s":[114,114,116,117,118,120,120],"d":[78,78,79,79,80,81,81]}},"6":{"50":{"s":[91,92,93,94,96,97,98],"d":[54,54,55,56,56,57,58]},"90":{"s":[104,105,106,108,109,110,111],"d":[68,68,69,70,70,71,72]},"95":{"s":[108,109,110,111,113,114,115],"d":[72,72,73,74,74,75,76]},"99":{"s":[115,116,117,119,120,121,122],"d":[80,80,80,81,82,83,83]}},"7":{"50":{"s":[93,93,95,96,97,99,99],"d":[55,56,56,57,58,58,59]},"90":{"s":[106,107,108,109,111,112,113],"d":[69,70,70,71,72,72,73]},"95":{"s":[110,111,112,113,115,116,116],"d":[73,74,74,75,76,76,77]},"99":{"s":[117,118,119,120,122,123,124],"d":[81,81,82,82,83,84,84]}},"8":{"50":{"s":[95,95,96,98,99,100,101],"d":[57,57,57,58,59,60,60]},"90":{"s":[108,109,110,111,113,114,114],"d":[71,71,71,72,73,74,74]},"95":{"s":[112,112,114,115,116,118,118],"d":[75,75,75,76,77,78,78]},"99":{"s":[119,120,121,122,123,125,125],"d":[82,82,83,83,84,85,86]}},"9":{"50":{"s":[96,97,98,100,101,102,103],"d":[58,58,58,59,60,61,61]},"90":{"s":[110,110,112,113,114,116,116],"d":[72,72,72,73,74,75,75]},"95":{"s":[114,114,115,117,118,119,120],"d":[76,76,76,77,78,79,79]},"99":{"s":[121,121,123,124,125,127,127],"d":[83,83,84,84,85,86,87]}},"10":{"50":{"s":[98,99,100,102,103,104,105],"d":[59,59,59,60,61,62,62]},"90":{"s":[112,112,114,115,116,118,118],"d":[73,73,73,74,75,76,76]},"95":{"s":[116,116,117,119,120,121,122],"d":[77,77,77,78,79,80,80]},"99":{"s":[123,123,125,126,127,129,129],"d":[84,84,85,86,86,87,88]}},"11":{"50":{"s":[100,101,102,103,105,106,107],"d":[60,60,60,61,62,63,63]},"90":{"s":[114,114,116,117,118,119,120],"d":[74,74,74,75,76,77,77]},"95":{"s":[118,118,119,121,122,123,124],"d":[78,78,78,79,80,81,81]},"99":{"s":[125,125,126,128,129,130,131],"d":[85,85,86,87,87,88,89]}},"12":{"50":{"s":[102,103,104,105,107,108,109],"d":[61,61,61,62,63,64,64]},"90":{"s":[116,116,117,119,120,121,122],"d":[75,75,75,76,77,78,78]},"95":{"s":[119,120,121,123,124,125,126],"d":[79,79,79,80,81,82,82]},"99":{"s":[127,127,128,130,131,132,133],"d":[86,86,87,88,88,89,90]}},"13":{"50":{"s":[104,105,106,107,109,110,110],"d":[62,62,62,63,64,65,65]},"90":{"s":[117,118,119,121,122,123,124],"d":[76,76,76,77,78,79,79]},"95":{"s":[121,122,123,124,126,127,128],"d":[80,80,80,81,82,83,83]},"99":{"s":[128,129,130,132,133,134,135],"d":[87,87,88,89,89,90,91]}},"14":{"50":{"s":[106,106,107,109,110,111,112],"d":[63,63,63,64,65,66,66]},"90":{"s":[119,120,121,122,124,125,125],"d":[77,77,77,78,79,80,80]},"95":{"s":[123,123,125,126,127,129,129],"d":[81,81,81,82,83,84,84]},"99":{"s":[130,131,132,133,135,136,136],"d":[88,88,89,90,90,91,92]}},"15":{"50":{"s":[107,108,109,110,111,113,113],"d":[64,64,64,65,66,67,67]},"90":{"s":[120,121,122,123,125,126,127],"d":[78,78,78,79,80,81,81]},"95":{"s":[124,125,126,127,129,130,131],"d":[82,82,82,83,84,85,85]},"99":{"s":[131,132,133,134,136,137,138],"d":[89,89,90,91,91,92,93]}},"16":{"50":{"s":[108,108,110,111,112,114,114],"d":[64,64,65,66,66,67,68]},"90":{"s":[121,122,123,124,126,127,128],"d":[78,78,79,80,81,81,82]},"95":{"s":[125,126,127,128,130,131,132],"d":[82,82,83,84,85,85,86]},"99":{"s":[132,133,134,135,137,138,139],"d":[90,90,90,91,92,93,93]}},"17":{"50":{"s":[108,109,110,111,113,114,115],"d":[64,65,65,66,67,67,68]},"90":{"s":[122,122,123,125,126,127,128],"d":[78,79,79,80,81,81,82]},"95":{"s":[125,126,127,129,130,131,132],"d":[82,83,83,84,85,85,86]},"99":{"s":[133,133,134,136,137,138,139],"d":[90,90,91,91,92,93,93]}}}};
+const WHO = {"1":{"len":[[11,74.5388,0.03125,2.3293],[12,75.7488,0.03137,2.3762],[13,76.9186,0.03154,2.426],[14,78.0497,0.03174,2.4773],[15,79.1458,0.03197,2.5303],[16,80.2113,0.03222,2.5844],[17,81.2487,0.0325,2.6406],[18,82.2587,0.03279,2.6973],[19,83.2418,0.0331,2.7553],[20,84.1996,0.03342,2.814],[21,85.1348,0.03376,2.8742],[22,86.0477,0.0341,2.9342],[23,86.941,0.03445,2.9951],[24,87.8161,0.03479,3.0551]],"hgt":[[24,87.1161,0.03507,3.0551],[25,87.972,0.03542,3.116],[26,88.8065,0.03576,3.1757],[27,89.6197,0.0361,3.2353],[28,90.412,0.03642,3.2928],[29,91.1828,0.03674,3.3501],[30,91.9327,0.03704,3.4052],[31,92.6631,0.03733,3.4591],[32,93.3753,0.03761,3.5118],[33,94.0711,0.03787,3.5625],[34,94.7532,0.03812,3.612],[35,95.4236,0.03836,3.6604],[36,96.0835,0.03858,3.7069],[37,96.7337,0.03879,3.7523],[38,97.3749,0.039,3.7976],[39,98.0073,0.03919,3.8409],[40,98.631,0.03937,3.8831],[41,99.2459,0.03954,3.9242],[42,99.8515,0.03971,3.9651],[43,100.4485,0.03986,4.0039],[44,101.0374,0.04002,4.0435],[45,101.6186,0.04016,4.081],[46,102.1933,0.04031,4.1194],[47,102.7625,0.04045,4.1567],[48,103.3273,0.04059,4.1941],[49,103.8886,0.04073,4.2314],[50,104.4473,0.04086,4.2677],[51,105.0041,0.041,4.3052],[52,105.5596,0.04113,4.3417],[53,106.1138,0.04126,4.3783],[54,106.6668,0.04139,4.4149],[55,107.2188,0.04152,4.4517],[56,107.7697,0.04165,4.4886],[57,108.3198,0.04177,4.5245],[58,108.8689,0.0419,4.5616],[59,109.417,0.04202,4.5977],[60,109.9638,0.04214,4.6339]]},"2":{"len":[[11,72.771,0.03464,2.5208],[12,74.015,0.03479,2.575],[13,75.2176,0.03496,2.6296],[14,76.3817,0.03514,2.6841],[15,77.5099,0.03534,2.7392],[16,78.6055,0.03555,2.7944],[17,79.671,0.03576,2.849],[18,80.7079,0.03598,2.9039],[19,81.7182,0.0362,2.9582],[20,82.7036,0.03643,3.0129],[21,83.6654,0.03666,3.0672],[22,84.604,0.03688,3.1202],[23,85.5202,0.03711,3.1737],[24,86.4153,0.03734,3.2267]],"hgt":[[24,85.7153,0.03764,3.2267],[25,86.5904,0.03786,3.2783],[26,87.4462,0.03808,3.33],[27,88.283,0.0383,3.3812],[28,89.1004,0.03851,3.4313],[29,89.8991,0.03872,3.4809],[30,90.6797,0.03893,3.5302],[31,91.443,0.03913,3.5782],[32,92.1906,0.03933,3.6259],[33,92.9239,0.03952,3.6724],[34,93.6444,0.03971,3.7186],[35,94.3533,0.03989,3.7638],[36,95.0515,0.04006,3.8078],[37,95.7399,0.04024,3.8526],[38,96.4187,0.04041,3.8963],[39,97.0885,0.04057,3.9389],[40,97.7493,0.04073,3.9813],[41,98.4015,0.04089,4.0236],[42,99.0448,0.04105,4.0658],[43,99.6795,0.0412,4.1068],[44,100.3058,0.04135,4.1476],[45,100.9238,0.0415,4.1883],[46,101.5337,0.04164,4.2279],[47,102.136,0.04179,4.2683],[48,102.7312,0.04193,4.3075],[49,103.3197,0.04206,4.3456],[50,103.9021,0.0422,4.3847],[51,104.4786,0.04233,4.4226],[52,105.0494,0.04246,4.4604],[53,105.6148,0.04259,4.4981],[54,106.1748,0.04272,4.5358],[55,106.7295,0.04285,4.5734],[56,107.2788,0.04298,4.6108],[57,107.8227,0.0431,4.6472],[58,108.3613,0.04322,4.6834],[59,108.8948,0.04334,4.7195],[60,109.4233,0.04347,4.7566]]}};
+const IAP = {"1":[[5.0,99.0,102.3,105.6,108.9,112.4,115.9,119.4,5.7],[5.5,101.6,105.0,108.4,111.9,115.4,119.0,122.7,5.3],[6.0,104.2,107.7,111.2,114.8,118.5,122.2,126.0,5.6],[6.5,106.8,110.4,114.0,117.8,121.6,125.4,129.3,5.5],[7.0,109.3,113.0,116.8,120.7,124.6,128.6,132.6,5.9],[7.5,111.8,115.7,119.6,123.5,127.6,131.7,135.9,5.7],[8.0,114.3,118.2,122.3,126.4,130.5,134.8,139.1,6.3],[8.5,116.7,120.8,124.9,129.1,133.4,137.8,142.2,6.1],[9.0,119.0,123.2,127.5,131.8,136.3,140.7,145.3,6.4],[9.5,121.3,125.6,130.0,134.5,139.1,143.7,148.3,6.4],[10.0,123.6,128.1,132.6,137.2,141.9,146.6,151.4,6.8],[10.5,125.9,130.5,135.2,139.9,144.7,149.5,154.4,6.5],[11.0,128.2,133.0,137.8,142.7,147.6,152.5,157.5,7.6],[11.5,130.7,135.6,140.6,145.5,150.5,155.6,160.6,7.3],[12.0,133.2,138.3,143.3,148.4,153.5,158.6,163.7,8.1],[12.5,135.7,141.0,146.2,151.4,156.5,161.7,166.8,7.9],[13.0,138.3,143.7,149.0,154.3,159.5,164.7,169.9,9.0],[13.5,140.9,146.4,151.8,157.2,162.4,167.6,172.7,8.4],[14.0,143.4,149.0,154.5,159.9,165.1,170.3,175.4,9.0],[14.5,145.8,151.5,157.0,162.3,167.6,172.7,177.7,7.8],[15.0,148.0,153.7,159.2,164.5,169.7,174.8,179.7,7.9],[15.5,150.0,155.7,161.2,166.5,171.6,176.5,181.4,6.6],[16.0,151.8,157.4,162.9,168.1,173.1,178.0,182.7,7.2],[16.5,153.4,159.1,164.5,169.6,174.5,179.3,183.8,6.7],[17.0,155.0,160.6,165.9,171.0,175.8,180.4,184.8,6.9],[17.5,156.6,162.1,167.3,172.3,177.0,181.5,185.8,6.1],[18.0,158.1,163.6,168.7,173.6,178.2,182.5,186.7,6.9]],"2":[[5.0,97.2,100.5,103.9,107.5,111.3,115.2,119.3,5.4],[5.5,99.8,103.2,106.8,110.5,114.4,118.3,122.5,5.7],[6.0,102.3,106.0,109.7,113.5,117.4,121.5,125.6,5.8],[6.5,104.9,108.7,112.5,116.5,120.5,124.6,128.7,5.5],[7.0,107.4,111.4,115.4,119.4,123.5,127.7,131.9,6.1],[7.5,110.0,114.1,118.2,122.4,126.6,130.8,135.0,6.0],[8.0,112.6,116.8,121.1,125.4,129.6,133.9,138.1,6.2],[8.5,115.2,119.6,124.0,128.4,132.7,137.0,141.3,6.8],[9.0,117.8,122.4,126.9,131.4,135.8,140.2,144.5,6.9],[9.5,120.5,125.2,129.9,134.4,138.9,143.3,147.6,6.6],[10.0,123.3,128.1,132.8,137.4,142.0,146.4,150.8,7.8],[10.5,126.1,130.9,135.7,140.4,145.0,149.5,153.9,7.3],[11.0,128.8,133.7,138.6,143.3,147.9,152.4,156.8,7.9],[11.5,131.5,136.4,141.2,145.9,150.6,155.1,159.6,7.1],[12.0,134.0,138.9,143.7,148.4,153.0,157.5,162.0,7.0],[12.5,136.3,141.1,145.8,150.5,155.1,159.6,164.1,6.7],[13.0,138.2,142.9,147.6,152.2,156.8,161.3,165.9,6.9],[13.5,139.9,144.5,149.1,153.6,158.2,162.7,167.2,6.0],[14.0,141.3,145.8,150.2,154.7,159.2,163.7,168.2,6.6],[14.5,142.4,146.8,151.1,155.5,160.0,164.5,169.0,5.9],[15.0,143.3,147.5,151.8,156.1,160.5,165.0,169.5,6.6],[15.5,144.1,148.1,152.3,156.6,160.9,165.3,169.8,5.9],[16.0,144.7,148.6,152.7,156.9,161.2,165.6,170.1,6.1],[16.5,145.2,149.1,153.1,157.2,161.4,165.7,170.2,6.4],[17.0,145.7,149.5,153.4,157.4,161.6,165.9,170.4,6.5],[17.5,146.2,149.8,153.6,157.6,161.7,166.0,170.5,6.7],[18.0,146.6,150.2,153.9,157.8,161.9,166.1,170.6,6.6]]};
+const ZP = [-1.8808,-1.2816,-0.6745,0,0.6745,1.2816,1.8808];
+const HZ = [-1.6449,-1.2816,-0.6745,0,0.6745,1.2816,1.6449];
+const CATS = ["Normal","Elevated BP","Stage 1 hypertension range","Stage 2 hypertension range"];
+const CHIP = ["Normal","Elevated","Stage 1 range","Stage 2 range"];
+const $ = id => document.getElementById(id);
+
+
+let hmode = "measured";
+
+function todayStr(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+$("dom").value = todayStr();
+
+function phi(z){
+  const t = 1/(1+0.2316419*Math.abs(z));
+  const d = 0.3989423*Math.exp(-z*z/2);
+  const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z>0 ? 1-p : p;
+}
+function qnorm(p){
+  let lo=-8, hi=8;
+  for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(phi(mid)<p) lo=mid; else hi=mid; }
+  return (lo+hi)/2;
+}
+function parseDate(v){
+  if(!v) return null;
+  const [y,m,d] = v.split("-").map(Number);
+  return {y,m,d,t:Date.UTC(y,m-1,d)};
+}
+function readNum(id){
+  const v = $(id).value.trim();
+  if(v==="") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : NaN;
+}
+function whoZ(sexKey, months, x){
+  const arr = months < 24 ? WHO[sexKey].len : WHO[sexKey].hgt;
+  let M, S;
+  if(months <= arr[0][0]){ M = arr[0][1]; S = arr[0][2]; }
+  else if(months >= arr[arr.length-1][0]){ M = arr[arr.length-1][1]; S = arr[arr.length-1][2]; }
+  else {
+    for(let i=0;i<arr.length-1;i++){
+      if(months >= arr[i][0] && months <= arr[i+1][0]){
+        const f = (months-arr[i][0])/(arr[i+1][0]-arr[i][0]);
+        M = arr[i][1] + (arr[i+1][1]-arr[i][1])*f;
+        S = arr[i][2] + (arr[i+1][2]-arr[i][2])*f;
+        break;
+      }
+    }
+  }
+  return (x/M - 1)/S;
+}
+function iapZ(sexKey, years, x){
+  const t = IAP[sexKey];
+  const yy = Math.min(Math.max(years, t[0][0]), t[t.length-1][0]);
+  let v;
+  for(let i=0;i<t.length-1;i++){
+    if(yy >= t[i][0] && yy <= t[i+1][0]){
+      const f = (yy-t[i][0])/(t[i+1][0]-t[i][0]);
+      v = [];
+      for(let k=1;k<=7;k++) v.push(t[i][k] + (t[i+1][k]-t[i][k])*f);
+      break;
+    }
+  }
+  if(!v){ v = t[t.length-1].slice(1,8); }
+  if(x <= v[0]) return ZP[0] + (x-v[0])*(ZP[1]-ZP[0])/(v[1]-v[0]);
+  if(x >= v[6]) return ZP[6] + (x-v[6])*(ZP[6]-ZP[5])/(v[6]-v[5]);
+  for(let i=0;i<6;i++){
+    if(x >= v[i] && x <= v[i+1]) return ZP[i] + (x-v[i])*(ZP[i+1]-ZP[i])/(v[i+1]-v[i]);
+  }
+  return 0;
+}
+function refAt(sexName, age, hz){
+  const t = BP[sexName][String(age)];
+  const zc = Math.min(Math.max(hz, HZ[0]), HZ[6]);
+  let i = 0;
+  while(i < 5 && zc > HZ[i+1]) i++;
+  const f = (zc-HZ[i])/(HZ[i+1]-HZ[i]);
+  const g = a => a[i] + (a[i+1]-a[i])*f;
+  const mk = k => ({50:g(t["50"][k]), 90:g(t["90"][k]), 95:g(t["95"][k]), 99:g(t["99"][k])});
+  return {s:mk("s"), d:mk("d"), clamped: hz < HZ[0] || hz > HZ[6]};
+}
+function analyze(val, r, age, kind){
+  const E  = kind==="s" ? 120 : 80;
+  const S1 = kind==="s" ? 130 : 80;
+  const S2 = kind==="s" ? 140 : 90;
+  let te, t1, t2;
+  if(age < 13){ te = Math.min(r[90],E); t1 = Math.min(r[95],S1); t2 = Math.min(r[95]+12,S2); }
+  else { te = E; t1 = S1; t2 = S2; }
+  const cat = val>=t2 ? 3 : val>=t1 ? 2 : val>=te ? 1 : 0;
+  const sd = ((r[90]-r[50])/1.28 + (r[95]-r[50])/1.645 + (r[99]-r[50])/2.326)/3;
+  const z = (val-r[50])/sd;
+  return {val, te, t1, t2, cat, z, p: phi(z)*100, r};
+}
+const up = x => Math.ceil(x - 1e-9);
+function ord(n){
+  const m100 = n % 100, m10 = n % 10;
+  if(m100 >= 11 && m100 <= 13) return n + "th";
+  return n + (m10 === 1 ? "st" : m10 === 2 ? "nd" : m10 === 3 ? "rd" : "th");
+}
+function pctLabel(p){
+  if(p < 1) return "&lt;1st";
+  if(p > 99) return "&gt;99th";
+  return ord(Math.floor(p + 0.01));
+}
+function pctText(p){ return pctLabel(p).replace("&lt;","<").replace("&gt;",">"); }
+function fmtZ(z){ if(Math.abs(z) < 0.005) return "0.00"; return (z>0?"+":"−") + Math.abs(z).toFixed(2); }
+
+function gauge(a, label){
+  const W=360, x0=8, x1=352, span=x1-x0;
+  const lo = Math.floor(Math.min(a.r[50]-4, a.val-6));
+  const hi = Math.ceil(Math.max(a.t2+10, a.val+6));
+  const X = v => x0 + (v-lo)/(hi-lo)*span;
+  const zones = [[lo,a.te,0],[a.te,a.t1,1],[a.t1,a.t2,2],[a.t2,hi,3]].filter(z => z[1]-z[0] > 1e-6);
+  const id = "clip"+label[0];
+  let s = `<svg class="g" viewBox="0 0 ${W} 74" role="img" aria-label="${label} ${a.val} mmHg: ${CATS[a.cat]}">`;
+  s += `<defs><clipPath id="${id}"><rect x="${x0}" y="24" width="${span}" height="16" rx="8"/></clipPath></defs>`;
+  s += `<g clip-path="url(#${id})">`;
+  zones.forEach(z => { s += `<rect x="${X(z[0]).toFixed(1)}" y="24" width="${(X(z[1])-X(z[0])).toFixed(1)}" height="16" fill="var(--z${z[2]})"/>`; });
+  s += `</g>`;
+  let last = -99;
+  [a.te,a.t1,a.t2].forEach(t => {
+    const x = X(t);
+    if(x - last < 24) return;
+    last = x;
+    s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="24" y2="44" stroke="var(--muted)" stroke-width="1"/>`;
+    s += `<text x="${x.toFixed(1)}" y="57" text-anchor="middle">${up(t)}</text>`;
+  });
+  const px = Math.min(Math.max(X(a.val), 14), 346);
+  s += `<line x1="${px.toFixed(1)}" x2="${px.toFixed(1)}" y1="16" y2="48" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>`;
+  s += `<circle cx="${px.toFixed(1)}" cy="14" r="4.5" fill="var(--ink)"/>`;
+  s += `<text class="val" x="${px.toFixed(1)}" y="68" text-anchor="middle">${a.val}</text>`;
+  s += `</svg>`;
+  return s;
+}
+
+function render(res){
+  const {ageY, ageM, sexName, hcm, hpct, hz, hrefName, ref, S, D, nRead, avgS, avgD} = res;
+  const cat = Math.max(S.cat, D.cat);
+  let driver;
+  if(cat === 0) driver = "Both systolic and diastolic BP are below the elevated thresholds for this child’s age, sex and height.";
+  else if(S.cat === D.cat) driver = "Both systolic and diastolic BP fall in this range.";
+  else driver = (S.cat > D.cat ? "Systolic" : "Diastolic") + " BP sets the category.";
+  const thrS = `Elevated ≥${up(S.te)}, Stage 1 ≥${up(S.t1)}, Stage 2 ≥${up(S.t2)}`;
+  const thrD = `Elevated ≥${up(D.te)}, Stage 1 ≥${up(D.t1)}, Stage 2 ≥${up(D.t2)}`;
+  const heightBlock = hcm != null
+    ? `<div class="big">${hcm.toFixed(1)} <small>cm</small></div><div class="sub">z ${fmtZ(hz)} · ${pctLabel(hpct)} percentile</div>`
+    : `<div class="big">${pctLabel(hpct)} <small>percentile</small></div><div class="sub">z ${fmtZ(hz)} (entered)</div>`;
+  let html = `
+  <div class="verdict v${cat}">
+    <div class="k">${ageY} y ${ageM} mo · ${sexName} · BP ${avgS}/${avgD}${nRead>1?` (average of ${nRead})`:""}</div>
+    <div class="v">${CATS[cat]}</div>
+    <p>${driver}</p>
+  </div>
+  <div class="metrics">
+    <div class="m"><div class="t">Height</div>${heightBlock}</div>
+    <div class="m"><div class="t">Systolic</div><div class="big">${S.val} <small>mmHg</small></div><div class="sub">${pctLabel(S.p)} percentile · z ${fmtZ(S.z)}</div><span class="chip v${S.cat}">${CHIP[S.cat]}</span></div>
+    <div class="m"><div class="t">Diastolic</div><div class="big">${D.val} <small>mmHg</small></div><div class="sub">${pctLabel(D.p)} percentile · z ${fmtZ(D.z)}</div><span class="chip v${D.cat}">${CHIP[D.cat]}</span></div>
+  </div>
+  <div class="gauge"><div class="gt"><span><strong>Systolic</strong> ${S.val}</span><span>${thrS}</span></div>${gauge(S,"Systolic")}</div>
+  <div class="gauge"><div class="gt"><span><strong>Diastolic</strong> ${D.val}</span><span>${thrD}</span></div>${gauge(D,"Diastolic")}</div>
+  <div class="legend">
+    <span><i style="background:var(--z0)"></i>Normal</span>
+    <span><i style="background:var(--z1)"></i>Elevated</span>
+    <span><i style="background:var(--z2)"></i>Stage 1</span>
+    <span><i style="background:var(--z3)"></i>Stage 2</span>
+  </div>
+  <h2>Reference BP at this child’s age, sex and height</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Percentile</th><th>Systolic</th><th>Diastolic</th></tr></thead>
+    <tbody>
+      <tr><th>50th</th><td>${Math.round(ref.s[50])}</td><td>${Math.round(ref.d[50])}</td></tr>
+      <tr><th>90th</th><td>${Math.round(ref.s[90])}</td><td>${Math.round(ref.d[90])}</td></tr>
+      <tr><th>95th</th><td>${Math.round(ref.s[95])}</td><td>${Math.round(ref.d[95])}</td></tr>
+      <tr><th>99th</th><td>${Math.round(ref.s[99])}</td><td>${Math.round(ref.d[99])}</td></tr>
+    </tbody>
+  </table></div>
+  <div class="notes">
+    <p>A single visit cannot establish hypertension. Confirm elevated readings on repeat measurements; an average of 3 readings on different days is a common approach.</p>
+    ${ref.clamped ? "<p>Height is outside the 5th–95th percentile range of the table, so the nearest height column was used.</p>" : ""}
+    ${ageY < 13 ? "" : "<p>From age 13, fixed adult-style cut-offs (120/80, 130/80, 140/90) define the categories.</p>"}
+    <p>Height reference: ${hrefName}. BP percentiles and z-scores are estimates.</p>
+  </div>
+  <div class="actions"><button type="button" class="btn primary" id="copy">Copy summary</button></div>`;
+  $("out").innerHTML = html;
+
+  const summary = [
+    `Age ${ageY} y ${ageM} mo, ${sexName}`,
+    hcm != null ? `Height ${hcm.toFixed(1)} cm (z ${fmtZ(hz)}, ${pctText(hpct)} percentile)` : `Height ${pctText(hpct)} percentile (entered)`,
+    `BP ${avgS}/${avgD} mmHg${nRead>1 ? ` (average of ${nRead} readings)` : ""}`,
+    `Systolic: ${pctText(S.p)} percentile (z ${fmtZ(S.z)}), ${CHIP[S.cat]}`,
+    `Diastolic: ${pctText(D.p)} percentile (z ${fmtZ(D.z)}), ${CHIP[D.cat]}`,
+    `Category: ${CATS[cat]}`,
+    `Reference: AAP 2017 normal-weight BP tables (Flynn et al., Pediatrics 2017;140:e20171904).`
+  ].join("\n");
+  $("copy").addEventListener("click", () => copyText(summary, $("copy")));
+}
+
+function copyText(text, btn){
+  const done = () => { const o = btn.textContent; btn.textContent = "Copied"; setTimeout(() => btn.textContent = o, 1600); };
+  const fallback = () => {
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if(ok) done(); else btn.textContent = "Copy not available";
+    }catch(e){ btn.textContent = "Copy not available"; }
+  };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, fallback); }
+    else fallback();
+  }catch(e){ fallback(); }
+}
+
+function showEmpty(missing){
+  $("out").innerHTML = `<p class="empty">${missing.length
+    ? `Still needed: <strong>${missing.join(", ")}</strong>.`
+    : "Enter the child’s details to see results."} Results appear here as soon as everything is filled in.</p>`;
+}
+
+function compute(){
+  const problems = [], missing = [];
+  const b = parseDate($("dob").value), m = parseDate($("dom").value);
+  if(!b) missing.push("birth date");
+  if(!m) missing.push("measurement date");
+  const sexEl = document.querySelector("input[name=sex]:checked");
+  if(!sexEl) missing.push("sex");
+  const units = document.querySelector("input[name=units]:checked").value;
+
+  let hcm = null, hpct = null, hz = null;
+  if(hmode === "measured"){
+    const h = readNum("height");
+    if(h === null) missing.push("height");
+    else if(isNaN(h) || h <= 0) problems.push("Enter a valid height.");
+    else {
+      hcm = units === "in" ? h*2.54 : h;
+      if(hcm < 50 || hcm > 230) problems.push("Height looks out of range. Check the value and the unit.");
+    }
+  } else {
+    const p = readNum("hpct");
+    if(p === null) missing.push("height percentile");
+    else if(isNaN(p) || p <= 0 || p >= 100) problems.push("Height percentile must be between 0 and 100.");
+    else { hpct = p; hz = qnorm(p/100); }
+  }
+
+  const reads = [];
+  [1,2,3].forEach(i => {
+    const s = readNum("s"+i), d = readNum("d"+i);
+    if(i === 1){
+      if(s === null) missing.push("systolic");
+      if(d === null) missing.push("diastolic");
+    } else if((s === null) !== (d === null)){
+      problems.push(`Reading ${i}: enter both systolic and diastolic.`);
+      return;
+    }
+    if(s === null || d === null) return;
+    if(isNaN(s) || isNaN(d)){ problems.push(`Reading ${i}: enter valid numbers.`); return; }
+    if(s < 40 || s > 260 || d < 10 || d > 160){ problems.push(`Reading ${i} looks out of range.`); return; }
+    if(d >= s){ problems.push(`Reading ${i}: diastolic should be lower than systolic.`); return; }
+    reads.push([s,d]);
+  });
+
+  let ageY = null, ageM = null, ageMonths = null;
+  if(b && m){
+    const days = (m.t - b.t)/864e5;
+    if(days < 0){ problems.push("Measurement date is before the birth date."); }
+    else {
+      ageY = m.y - b.y - ((m.m < b.m || (m.m === b.m && m.d < b.d)) ? 1 : 0);
+      const compMonths = (m.y-b.y)*12 + (m.m-b.m) - (m.d < b.d ? 1 : 0);
+      ageM = compMonths - ageY*12;
+      ageMonths = days/30.4375;
+      if(ageY < 1 || ageY > 17) problems.push(`Age is ${ageY} y ${ageM} mo. BP percentiles are available for ages 1 to 17 years only.`);
+    }
+  }
+
+  $("msg").innerHTML = problems.map(p => `<div class="err">${p}</div>`).join("");
+  if(problems.length || missing.length || !reads.length){
+    showEmpty(missing);
+    return;
+  }
+
+  const sexName = sexEl.value === "M" ? "Male" : "Female";
+  const sexKey = sexEl.value === "M" ? 1 : 2;
+  let hrefName = "entered percentile";
+  if(hcm != null){
+    if(ageMonths < 60){
+      hz = whoZ(sexKey, ageMonths, hcm);
+      hrefName = ageMonths < 24 ? "WHO length-for-age (under 2 years)" : "WHO height-for-age (2 to under 5 years)";
+    } else {
+      hz = iapZ(sexKey, ageMonths/12, hcm);
+      hrefName = "IAP 2015 height charts (5 to 18 years)";
+    }
+    hpct = phi(hz)*100;
+  }
+  const avgS = Math.round(reads.reduce((a,r)=>a+r[0],0)/reads.length);
+  const avgD = Math.round(reads.reduce((a,r)=>a+r[1],0)/reads.length);
+  const ref = refAt(sexKey === 1 ? "boys" : "girls", ageY, hz);
+  const S = analyze(avgS, ref.s, ageY, "s");
+  const D = analyze(avgD, ref.d, ageY, "d");
+  render({ageY, ageM, sexName, hcm, hpct, hz, hrefName, ref, S, D, nRead: reads.length, avgS, avgD});
+}
+
+$("f").addEventListener("input", compute);
+$("f").addEventListener("change", compute);
+
+document.querySelectorAll("input[name=units]").forEach(r => r.addEventListener("change", () => {
+  const h = readNum("height");
+  if(h && !isNaN(h)){
+    const toIn = r.value === "in";
+    $("height").value = (toIn ? h/2.54 : h*2.54).toFixed(1);
+  }
+  $("height").placeholder = r.value === "in" ? "e.g. 52.2" : "e.g. 132.5";
+}));
+
+function setHMode(mode){
+  hmode = mode;
+  $("hMeasured").hidden = mode !== "measured";
+  $("hPct").hidden = mode !== "pct";
+  compute();
+}
+$("toPct").addEventListener("click", () => setHMode("pct"));
+$("toMeasured").addEventListener("click", () => setHMode("measured"));
+
+$("reset").addEventListener("click", () => {
+  $("f").reset();
+  $("dom").value = todayStr();
+  $("msg").innerHTML = "";
+  setHMode("measured");
+});
+
+compute();
+</script>
+</body>
+</html>
